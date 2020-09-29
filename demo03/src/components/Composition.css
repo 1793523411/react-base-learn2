@@ -1,0 +1,19 @@
+.FancyBorder{
+    text-align: center;
+}
+.FancyBorder-blue {
+    color: blue;
+}
+.FancyBorder-red {
+    color: red;
+}
+
+.SplitPane-left{
+    position: absolute;
+    left: 0;
+}
+
+.SplitPane-right{
+    position: absolute;
+    right: 0;
+}

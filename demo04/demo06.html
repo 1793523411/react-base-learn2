@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    html,
+    body {
+        overflow: hidden;
+    }
+
+    body {
+        position: relative;
+        background: #000;
+    }
+
+    p {
+        padding-bottom: 0.4rem;
+    }
+
+    ul>li {
+        list-style: none;
+        padding: 0.4rem 0;
+    }
+
+    .desc {
+        margin: 1.6rem;
+        top: 0;
+        left: 0;
+        color: #fff;
+        position: absolute;
+        padding: 0.8rem;
+    }
+</style>
+
+<body>
+    <div class="desc">
+        <p>Simplex Noise.</p>
+        <ul>
+            <li>Click : Add line.</li>
+            <li>Mousemove Y : Noise Amplitude.</li>
+            <li><button id="reset">Reset</button></li>
+        </ul>
+    </div>
+    <script>
+        /*
+* File Name / simplexWave.js
+* Created Date / Sep 15, 2020
+* Aurhor / Toshiya Marukubo
+* Twitter / https://twitter.com/toshiyamarukubo
+*/
+
+        /*
+          Common Tool.
+        */
+
+        class Tool {
+            // random number.
+            static randomNumber(min, max) {
+                return Math.floor(Math.random() * (max - min + 1) + min);
+            }
+            // random color rgb.
+            static randomColorRGB() {
+                return (
+                    "rgb(" +
+                    this.randomNumber(0, 255) +
+                    ", " +
+                    this.randomNumber(0, 255) +
+                    ", " +
+                    this.randomNumber(0, 255) +
+                    ")"
+                );
+            }
+            // random color hsl.
+            static randomColorHSL(hue, saturation, lightness) {
+                return (
+                    "hsl(" +
+                    hue +
+                    ", " +
+                    saturation +
+                    "%, " +
+                    lightness +
+                    "%)"
+                );
+            }
+            // gradient color.
+            static gradientColor(ctx, cr, cg, cb, ca, x, y, r) {
+                const col = cr + "," + cg + "," + cb;
+                const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+                g.addColorStop(0, "rgba(" + col + ", " + (ca * 1) + ")");
+                g.addColorStop(0.5, "rgba(" + col + ", " + (ca * 0.5) + ")");
+                g.addColorStop(1, "rgba(" + col + ", " + (ca * 0) + ")");
+                return g;
+            }
+        }
+
+        /*
+          When want to use angle.
+        */
+
+        class Angle {
+            constructor(angle) {
+                this.a = angle;
+                this.rad = this.a * Math.PI / 180;
+            }
+
+            incDec(num) {
+                this.a += num;
+                this.rad = this.a * Math.PI / 180;
+                return this.rad;
+            }
+        }
+
+        /*
+          When want to use controller.
+        */
+
+        class Controller {
+            constructor(id) {
+                this.id = document.getElementById(id);
+            }
+            getVal() {
+                return this.id.value;
+            }
+        }
+
+        /*
+          When want to use time.
+        */
+
+        class Time {
+            constructor(time) {
+                this.startTime = time;
+                this.lastTime;
+                this.elapsedTime;
+            }
+
+            getElapsedTime() {
+                this.lastTime = Date.now();
+                this.elapsedTime = (this.startTime - this.lastTime) * -1;
+                return this.elapsedTime;
+            }
+        }
+
+        /*
+          When want to use time.
+        */
+        let canvas;
+        const simplex = new SimplexNoise();
+
+        class Canvas {
+            constructor(bool) {
+                // create canvas.
+                this.canvas = document.createElement("canvas");
+                // if on screen.
+                if (bool === true) {
+                    this.canvas.style.display = 'block';
+                    this.canvas.style.top = 0;
+                    this.canvas.style.left = 0;
+                    document.getElementsByTagName("body")[0].appendChild(this.canvas);
+                }
+                this.ctx = this.canvas.getContext("2d");
+                this.width = this.canvas.width = window.innerWidth;
+                this.height = this.canvas.height = window.innerHeight;
+                // mouse infomation.
+                this.mouseX = null;
+                this.mouseY = this.height / 2;
+                // shape
+                this.shapeNum = 1;
+                this.shapes = [];
+                // time
+                this.time = new Time(Date.now());
+            }
+
+            // init, render, resize
+            init() {
+                this.shapes = [];
+                for (let i = 0; i < this.shapeNum; i++) {
+                    const s = new Shape(this.ctx, 0, this.height / 2);
+                    this.shapes.push(s);
+                }
+            }
+
+            render() {
+                this.ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < this.shapes.length; i++) {
+                    this.shapes[i].render(i);
+                }
+            }
+
+            resize() {
+                this.width = this.canvas.width = window.innerWidth;
+                this.height = this.canvas.height = window.innerHeight;
+                this.init();
+            }
+        }
+
+        /*
+          Fire class.
+        */
+
+        class Shape {
+            constructor(ctx, x, y) {
+                this.ctx = ctx;
+                this.init(x, y);
+            }
+
+            init(x, y) {
+                this.x = x;
+                this.y = y;
+                this.a = new Angle(Tool.randomNumber(0, 360));
+                this.step = canvas.width / 360;
+                if (canvas.width < 360) this.step = canvas.width / canvas.width;
+            }
+
+            draw() {
+                const ctx = this.ctx;
+                ctx.save();
+                ctx.lineJoin = 'bevel';
+                ctx.lineWidth = 10;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                for (let x = 0; x < canvas.width; x += this.step) {
+                    const noise = simplex.noise3D(x / 100, this.y / 100, this.a.rad) * (canvas.height - canvas.mouseY) / 2;
+                    ctx.strokeStyle = 'hsl(' + noise + ', 80%, 60%)';
+                    const y = Math.sin(x * Math.PI / 180 / 2) * noise + this.y;
+                    ctx.lineTo(x * this.step, y);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            updateParams() {
+                this.a.incDec(1);
+            }
+
+            render() {
+                this.draw();
+                this.updateParams();
+            }
+        }
+
+        (function () {
+            "use strict";
+            window.addEventListener("load", function () {
+                canvas = new Canvas(true);
+                canvas.init();
+
+                function render() {
+                    window.requestAnimationFrame(function () {
+                        canvas.render();
+                        render();
+                    });
+                }
+
+                render();
+
+                // event
+                window.addEventListener("resize", function () {
+                    canvas.resize();
+                }, false);
+
+                canvas.canvas.addEventListener('click', function (e) {
+                    const s = new Shape(canvas.ctx, 0, this.height / 2);
+                    canvas.shapes.push(s);
+                });
+
+                canvas.canvas.addEventListener('mousemove', function (e) {
+                    canvas.mouseY = e.clientY;
+                }, false);
+
+                canvas.canvas.addEventListener('touchmove', function (e) {
+                    const touch = e.targetTouches[0];
+                    canvas.mouseY = touch.pageY;
+                }, false);
+
+                document.getElementById('reset').addEventListener('click', function () {
+                    canvas.init();
+                }, false);
+            });
+        })();
+
+    </script>
+</body>
+
+</html>

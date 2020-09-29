@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    body {
+        display: flex;
+        width: 100%;
+        height: 100vh;
+        background-image: linear-gradient(to bottom,
+                hsl(213, 100%, calc(100% - 100% * var(--mouse-y, 0.1))),
+                hsl(calc(360 * var(--mouse-y, 0.9)), 100%, 75%));
+    }
+
+    .sun {
+        width: var(--mouse-y-s, 0);
+        height: var(--mouse-y-s, 0);
+        background-color: salmon;
+        border-radius: 50%;
+        position: absolute;
+        /*position: fixed; display:flex; */
+        left: -100px;
+
+        top:
+            calc(var(--mouse-y, 0.5)*800px - 200px);
+    }
+
+    .mountain {
+        width: 1440px;
+        height: 900px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        filter: brightness(calc(1.8 - var(--mouse-y, 1)));
+    }
+
+    .shadow {
+        width: calc(200px + var(--mouse-y, 0.5)*200px);
+        height: calc(100px + var(--mouse-y, 0.5)*100px);
+        position: absolute;
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        background-image:
+            url("https://res.cloudinary.com/dwas1lvkw/image/upload/v1599630248/shadow_lxz9ev.png");
+        left: 915px;
+        top: 436px;
+        transform-origin: right calc(100px + var(--mouse-y, 0.5)*100px)
+    }
+
+
+    .astronaut {
+        width: 34px;
+        height: 86px;
+        position: absolute;
+        left: 910px;
+        top: 365px;
+        filter: brightness(calc(0.7*(1.5 - var(--mouse-y, 1))));
+    }
+</style>
+
+<body>
+    <div class="sun"></div>
+
+    <img src="https://res.cloudinary.com/dwas1lvkw/image/upload/v1599630234/mountain_ikymif.png" alt=""
+        class="mountain">
+
+    <div class="shadow"></div>
+    <img src="https://res.cloudinary.com/dwas1lvkw/image/upload/v1599630243/astrnaut_ehthr6.png" alt=""
+        class="astronaut">
+
+    <script>
+        var root = document.documentElement;
+        document.addEventListener("mousemove", function (event) {
+            root.style.setProperty(
+                "--mouse-y", event.clientY / window.innerHeight);
+            root.style.setProperty("--mouse-y-s", event.y / 2 + 300 + 'px');
+
+        })
+    </script>
+</body>
+
+</html>

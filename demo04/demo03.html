@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    svg {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
+<body>
+    <svg viewBox="0 0 1000 500" width="1000" height="500" xmlns="http://www.w3.org/2000/svg" version="1.1">
+    </svg>
+    <script>
+        /*
+  Johan Karlsson, 2020
+  https://twitter.com/DonKarlssonSan
+  MIT License, see Details View
+*/
+
+        const svgNs = "http://www.w3.org/2000/svg";
+        let svg;
+        let w;
+        let h;
+        let logo;
+        let maxLength;
+
+        class Line {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.points = [];
+            }
+
+            draw(groupElement) {
+                let path = document.createElementNS(svgNs, "path");
+                let points = this.generatePoints();
+                let commands = this.convertPointsToCommands(points);
+                path.setAttribute("d", commands);
+                groupElement.appendChild(path);
+            }
+
+            generatePoints() {
+                let min = Math.min(w, h);
+                let points = [];
+                for (let i = 0; i < 50; i++) {
+                    let angle = Math.round(Math.random() * 8) * Math.PI / 4;
+                    let length = Math.random() * maxLength / (i + 2) * min / 800;
+                    let x = Math.cos(angle) * length;
+                    let y = Math.sin(angle) * length;
+                    this.x += x;
+                    this.y += y;
+                    let distance = Math.hypot(w / 2 - this.x, h / 2 - this.y);
+                    if (distance > min * 0.45) {
+                        break;
+                    }
+                    points.push(`${this.x}, ${this.y}`);
+                }
+                return points;
+            }
+
+            convertPointsToCommands(points) {
+                let commands = [];
+                commands.push(`M ${points[0]}`);
+                for (let i = 1; i < points.length; i++) {
+                    commands.push(`L ${points[i]}`);
+                }
+
+                return commands.join(" ");
+            }
+        }
+
+        function setup() {
+            svg = document.querySelector("svg");
+            document.addEventListener("click", draw);
+            document.addEventListener("keydown", onKeyDown);
+            window.addEventListener("resize", onResize);
+            logo = new Logo(w - 40, h - 40);
+            logo.draw(svg);
+            onResize();
+        }
+
+        function onKeyDown(e) {
+            if (e.code === "KeyD") {
+                download();
+            }
+        }
+
+        function onResize() {
+            w = window.innerWidth;
+            h = window.innerHeight;
+            svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+            svg.setAttribute("width", w);
+            svg.setAttribute("height", h);
+            logo.x = w - 40;
+            logo.y = h - 40;
+            logo.draw(svg);
+
+            draw();
+        }
+
+        function download() {
+            let svgDoc = svg.outerHTML;
+            let filename = "random-lines.svg";
+            let element = document.createElement("a");
+            element.setAttribute("href", "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgDoc));
+            element.setAttribute("download", filename);
+            element.style.display = "none";
+            document.body.appendChild(element);
+            element.addEventListener("click", e => e.stopPropagation());
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        function draw() {
+            console.clear();
+            let group = document.querySelector("#container");
+            if (group) {
+                group.remove();
+            }
+
+            group = document.createElementNS(svgNs, "g");
+            group.setAttribute("id", "container");
+            group.setAttribute("stroke-width", 0.5);
+            group.setAttribute("fill", "none");
+            group.setAttribute("stroke", "black");
+
+            let lines = [];
+            let sizeFactor = w * h / 1000;
+            let nrOfLines = sizeFactor * Math.random() + 60;
+            maxLength = Math.random() * sizeFactor * 5 + 200;
+            for (let i = 0; i <= nrOfLines; i++) {
+                let x = Math.random() * w;
+                let y = Math.random() * h;
+                line = new Line(x, y);
+                lines.push(line);
+            }
+            lines.forEach(l => l.draw(group));
+            svg.appendChild(group);
+        }
+
+        setup();
+        draw();
+
+    </script>
+</body>
+
+</html>
